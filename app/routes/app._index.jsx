@@ -1,7 +1,7 @@
-import { useEffect } from "react";
-import { useFetcher } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { useEffect } from "react";
+import { useFetcher } from "react-router";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
@@ -131,7 +131,7 @@ export default function Index() {
   const generateProduct = () => fetcher.submit({}, { method: "POST" });
 
   return (
-    <s-page heading="Shopify app template">
+    <s-page heading="Shopify app template 44">
       <s-button slot="primary-action" onClick={generateProduct}>
         Generate a product
       </s-button>
