@@ -1,0 +1,13 @@
+
+<h1 style="color: {{ block.settings.color }}">{{ block.settings.heading }}</h1>
+
+{% schema %}
+{
+  "name": "OFS Blog test",
+  "target": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading" },
+    { "type": "color", "id": "color", "label": "Text Color", "default": "#ff0000" }
+  ]
+}
+{% endschema %}
