@@ -3,7 +3,7 @@
 client_id = "0611846961e614f3997a3aa954c57523"
 application_url = "https://example.com"
 embedded = true
-name = "learning-app"
+name = "iLMIFY Reviews"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
