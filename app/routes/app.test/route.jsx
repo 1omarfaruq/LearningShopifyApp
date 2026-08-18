@@ -2,7 +2,7 @@ export default function TestPage(){
     return (
         <s-box padding="small">
             <s-section padding="none">
-                <s-stack direction="inline" padding="none small">
+                <s-stack direction="inline" padding="none small" gap="small">
                     <div className="tab-btn active">
                         <span><s-icon type="star-filled" direction="inline"></s-icon> Reviews</span>
                     </div>
@@ -10,8 +10,7 @@ export default function TestPage(){
                         <span><s-icon type="question-circle" direction="inline"></s-icon> Customer Questions</span>
                     </div>
                 </s-stack>
-            </s-section>
-            <style>
+                <style>
                 {`
                     .tab-btn {
                         position: relative;
@@ -19,6 +18,7 @@ export default function TestPage(){
                         flex-direction: column;
                         color: #303030;
                         opacity: 0.6;
+                        cursor: pointer;
                     }
 
                     .tab-btn.active {
@@ -53,6 +53,35 @@ export default function TestPage(){
                     }
                 `}
             </style>
+            </s-section>
+
+            <s-box padding="large-200 none none none">
+                <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                    <s-stack direction="inline" gap="small" alignItems="center">
+                        <h2>Heading dfgdf 55</h2>
+                        <s-badge tone="success"> <span className="live-bullate"></span> Active</s-badge>
+                        <style>
+                            {`
+                            .live-bullate {
+                                min-width: 16px;
+                                min-height: 16px;
+                                background: #ff0000;
+                            }
+                            `}
+                        </style>
+                    </s-stack>
+                    <s-stack direction="inline" gap="small">
+                        <s-button href="javascript:void(0)">Import</s-button>
+                        <s-button commandFor="export-menu">Export</s-button>
+
+                        <s-menu id="export-menu" accessibilityLabel="Export actions">
+                            <s-button icon="merge">Merge customer</s-button>
+                            <s-button icon="incoming">Request customer data</s-button>
+                            <s-button icon="delete" tone="critical">Delete customer</s-button>
+                        </s-menu>
+                    </s-stack>
+                </s-stack>
+            </s-box>
         </s-box>
 
         // <s-page heading="iLMIFY Reviews" inlineSize="large">
