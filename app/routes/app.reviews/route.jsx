@@ -1,185 +1,95 @@
-import { useState } from 'react';
+import { Outlet } from "react-router";
 
-export default function Reviews() {
-  const [activeTab, setActiveTab] = useState('requests');
+export default function ReviewsPage(){
+    return (
+        <s-box padding="small">
+            <s-section padding="none">
+                <s-stack direction="inline" padding="none small" gap="small">
+                    <div className="tab-btn active">
+                        <span><s-icon type="star-filled" direction="inline"></s-icon> Reviews</span>
+                    </div>
+                    <div className="tab-btn">
+                        <span><s-icon type="question-circle" direction="inline"></s-icon> Customer Questions</span>
+                    </div>
+                </s-stack>
+                <style>
+                {`
+                    .tab-btn {
+                        position: relative;
+                        display: flex;
+                        flex-direction: column;
+                        color: #303030;
+                        opacity: 0.6;
+                        cursor: pointer;
+                    }
 
-  return (
-    <s-page heading="Judge.me Reviews">
+                    .tab-btn.active {
+                        opacity: 1;
+                    }
 
-      {/* =========================
-          TOP TABS
-      ========================== */}
-      <s-section>
-        <s-stack
-          direction="inline"
-          gap="none"
-        >
-          <s-button
-            variant={activeTab === 'reviews' ? 'primary' : 'tertiary'}
-            onClick={() => setActiveTab('reviews')}
-          >
-            ★ &nbsp; Reviews
-          </s-button>
+                    .tab-btn span {
+                        display: flex;
+                        gap: 4px;
+                        padding: 12px 16px;
+                    }
 
-          <s-button
-            variant={activeTab === 'requests' ? 'primary' : 'tertiary'}
-            onClick={() => setActiveTab('requests')}
-          >
-            ✉ &nbsp; Review requests
-          </s-button>
+                    .tab-btn:hover {
+                        opacity: 1;
+                    }
 
-          <s-button
-            variant={activeTab === 'questions' ? 'primary' : 'tertiary'}
-            onClick={() => setActiveTab('questions')}
-          >
-            ◯ &nbsp; Customer questions
-          </s-button>
-        </s-stack>
-      </s-section>
+                    .tab-btn::after {
+                        content: "";
+                        height: 4px;
+                        background: #303030;
+                        border-radius: 5px 5px 0 0;
+                        opacity: 0;
+                        transition: opacity 0.2s ease;
+                    }
 
+                    .tab-btn:hover::after {
+                        opacity: 0.6;
+                    }
 
-      {/* =========================
-          REQUEST HISTORY
-      ========================== */}
-      {activeTab === 'requests' && (
-        <s-section heading="Request History">
+                    .tab-btn.active::after {
+                        opacity: 1;
+                    }
+                `}
+            </style>
+            </s-section>
 
-          <s-stack
-            direction="inline"
-            justifyContent="space-between"
-            alignItems="center"
-          >
+            <Outlet />
+            <s-box padding="large-200 none none none">
+                <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                    <s-stack direction="inline" gap="small" alignItems="center">
+                        <h2>Heading dfgdf 55</h2>
+                        <s-badge tone="success" interestFor="auto-publish-tooltip"> 
+                            <span className="live-bullate"></span> Auto-publish: On
+                        </s-badge>
+                        <s-tooltip id="auto-publish-tooltip">This order has active shipping labels.</s-tooltip>
+                        <style>
+                            {`
+                                .live-bullate {
+                                    display: inline-block;
+                                    width: 8px;
+                                    height: 8px;
+                                    background: #039835;
+                                    border-radius: 50%;
+                                }
+                            `}
+                        </style>
+                    </s-stack>
+                    <s-stack direction="inline" gap="small">
+                        <s-button href="javascript:void(0)">Import</s-button>
+                        <s-button commandFor="export-menu">Export</s-button>
 
-            {/* Left side */}
-            <s-text>
-              Request History
-            </s-text>
-
-            {/* Right side actions */}
-            <s-stack
-              direction="inline"
-              gap="small"
-            >
-
-              <s-button>
-                Edit request schedule
-              </s-button>
-
-              <s-button>
-                Edit email templates
-              </s-button>
-
-              <s-button variant="primary">
-                Request reviews
-              </s-button>
-
-              <s-button>
-                More actions⌄
-              </s-button>
-
-            </s-stack>
-
-          </s-stack>
-
-
-          {/* =========================
-              EMPTY STATE
-          ========================== */}
-          <s-box
-            padding="large"
-            border="base"
-            borderRadius="base"
-          >
-
-            <s-stack
-              alignItems="center"
-              justifyContent="center"
-              gap="base"
-            >
-
-              {/* Icon */}
-              <s-box
-                padding="base"
-                borderRadius="base"
-              >
-                <s-text size="large">
-                  📝
-                </s-text>
-              </s-box>
-
-
-              {/* Heading */}
-              <s-heading>
-                Track automatic review requests here
-              </s-heading>
-
-
-              {/* Description */}
-              <s-text
-                color="subdued"
-                alignment="center"
-              >
-                We collect reviews automatically from your customers
-                2 weeks after the order has been fulfilled. You can
-                also schedule requests from orders fulfilled before
-                you installed Judge.me.
-              </s-text>
-
-            </s-stack>
-
-          </s-box>
-
-        </s-section>
-      )}
-
-
-      {/* =========================
-          REVIEWS TAB
-      ========================== */}
-      {activeTab === 'reviews' && (
-        <s-section heading="Reviews">
-
-          <s-stack
-            alignItems="center"
-            justifyContent="center"
-            gap="base"
-          >
-            <s-heading>
-              Reviews
-            </s-heading>
-
-            <s-text color="subdued">
-              Your customer reviews will appear here.
-            </s-text>
-          </s-stack>
-
-        </s-section>
-      )}
-
-
-      {/* =========================
-          CUSTOMER QUESTIONS
-      ========================== */}
-      {activeTab === 'questions' && (
-        <s-section heading="Customer questions">
-
-          <s-stack
-            alignItems="center"
-            justifyContent="center"
-            gap="base"
-          >
-            <s-heading>
-              Customer questions
-            </s-heading>
-
-            <s-text color="subdued">
-              Customer questions will appear here.
-            </s-text>
-          </s-stack>
-
-        </s-section>
-      )}
-
-    </s-page>
-  );
+                        <s-menu id="export-menu" accessibilityLabel="Export actions">
+                            <s-button icon="merge">Merge customer</s-button>
+                            <s-button icon="incoming">Request customer data</s-button>
+                            <s-button icon="delete" tone="critical">Delete customer</s-button>
+                        </s-menu>
+                    </s-stack>
+                </s-stack>
+            </s-box>
+        </s-box>
+    );
 }

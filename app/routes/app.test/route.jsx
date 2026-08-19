@@ -1,3 +1,5 @@
+import { Outlet } from "react-router";
+
 export default function TestPage(){
     return (
         <s-box padding="small">
@@ -55,18 +57,24 @@ export default function TestPage(){
             </style>
             </s-section>
 
+            <Outlet />
             <s-box padding="large-200 none none none">
                 <s-stack direction="inline" justifyContent="space-between" alignItems="center">
                     <s-stack direction="inline" gap="small" alignItems="center">
                         <h2>Heading dfgdf 55</h2>
-                        <s-badge tone="success"> <span className="live-bullate"></span> Active</s-badge>
+                        <s-badge tone="success" interestFor="auto-publish-tooltip"> 
+                            <span className="live-bullate"></span> Auto-publish: On
+                        </s-badge>
+                        <s-tooltip id="auto-publish-tooltip">This order has active shipping labels.</s-tooltip>
                         <style>
                             {`
-                            .live-bullate {
-                                min-width: 16px;
-                                min-height: 16px;
-                                background: #ff0000;
-                            }
+                                .live-bullate {
+                                    display: inline-block;
+                                    width: 8px;
+                                    height: 8px;
+                                    background: #039835;
+                                    border-radius: 50%;
+                                }
                             `}
                         </style>
                     </s-stack>
@@ -83,13 +91,5 @@ export default function TestPage(){
                 </s-stack>
             </s-box>
         </s-box>
-
-        // <s-page heading="iLMIFY Reviews" inlineSize="large">
-        //     <s-section>
-        //         <s-stack>
-        //             <div className="btn-tab"><s-text>Reviews</s-text></div>
-        //         </s-stack>
-        //     </s-section>
-        // </s-page>
     );
 }
