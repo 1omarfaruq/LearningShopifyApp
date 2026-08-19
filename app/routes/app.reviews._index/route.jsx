@@ -1,7 +1,8 @@
 
 export default function ReviewsPages() {
     return (
-        <s-box padding="small">
+        <>
+        <s-box padding="small small none small">
             <s-stack direction="inline" justifyContent="space-between" alignItems="center">
                 <s-stack direction="inline" gap="small" alignItems="center">
                     <h2>Reviews</h2>
@@ -35,5 +36,50 @@ export default function ReviewsPages() {
                 </s-stack>
             </s-stack>
         </s-box>
+
+        <s-box padding="none small">
+            <s-section padding="none">
+                <s-box padding="small">
+                    <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                        <s-stack direction="inline" gap="small">
+                            <div className="sec-tab-btn active">
+                                All Reviews
+                            </div>
+                            <div className="sec-tab-btn">
+                                Padding
+                            </div>
+                            <div className="sec-tab-btn">
+                                Product Reviews
+                            </div>
+                            <style>
+                                {`
+                                    .sec-tab-btn{
+                                        border-radius: 10px;
+                                        padding: 8px 12px;
+                                        color: #4e4e4e;
+                                    }
+                                    .sec-tab-btn.active{
+                                        background: #d5d4d4;
+                                    }
+                                    .sec-tab-btn:hover{
+                                        background: #f0f0f0;
+                                    }
+                                `}
+                            </style>
+                        </s-stack>
+
+                        <s-stack direction="inline" gap="small">
+                            <s-button href="javascript:void(0)">
+                                <s-icon type="search"></s-icon>
+                            </s-button>
+                            <s-button href="javascript:void(0)">
+                                <s-icon type="sort"></s-icon>
+                            </s-button>
+                        </s-stack>
+                    </s-stack>
+                </s-box>
+            </s-section>
+        </s-box>
+        </>
     );
 }
