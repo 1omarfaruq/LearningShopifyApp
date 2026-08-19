@@ -5,12 +5,12 @@ export default function TestPage(){
         <s-box padding="small">
             <s-section padding="none">
                 <s-stack direction="inline" padding="none small" gap="small">
-                    <div className="tab-btn active">
-                        <span><s-icon type="star-filled" direction="inline"></s-icon> Reviews</span>
-                    </div>
-                    <div className="tab-btn">
+                    <s-clickable className="tab-btn active" href="reviews">
+                        <span><s-icon type="star-filled" direction="inline"></s-icon> Reviewsa</span>
+                    </s-clickable>
+                    <s-clickable className="tab-btn" href="questions">
                         <span><s-icon type="question-circle" direction="inline"></s-icon> Customer Questions</span>
-                    </div>
+                    </s-clickable>
                 </s-stack>
                 <style>
                 {`
@@ -58,38 +58,6 @@ export default function TestPage(){
             </s-section>
 
             <Outlet />
-            <s-box padding="large-200 none none none">
-                <s-stack direction="inline" justifyContent="space-between" alignItems="center">
-                    <s-stack direction="inline" gap="small" alignItems="center">
-                        <h2>Heading dfgdf 55</h2>
-                        <s-badge tone="success" interestFor="auto-publish-tooltip"> 
-                            <span className="live-bullate"></span> Auto-publish: On
-                        </s-badge>
-                        <s-tooltip id="auto-publish-tooltip">This order has active shipping labels.</s-tooltip>
-                        <style>
-                            {`
-                                .live-bullate {
-                                    display: inline-block;
-                                    width: 8px;
-                                    height: 8px;
-                                    background: #039835;
-                                    border-radius: 50%;
-                                }
-                            `}
-                        </style>
-                    </s-stack>
-                    <s-stack direction="inline" gap="small">
-                        <s-button href="javascript:void(0)">Import</s-button>
-                        <s-button commandFor="export-menu">Export</s-button>
-
-                        <s-menu id="export-menu" accessibilityLabel="Export actions">
-                            <s-button icon="merge">Merge customer</s-button>
-                            <s-button icon="incoming">Request customer data</s-button>
-                            <s-button icon="delete" tone="critical">Delete customer</s-button>
-                        </s-menu>
-                    </s-stack>
-                </s-stack>
-            </s-box>
         </s-box>
     );
 }
