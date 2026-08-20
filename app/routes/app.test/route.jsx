@@ -1,63 +1,77 @@
-import { Outlet } from "react-router";
+import { Form, useActionData } from "react-router";
 
-export default function TestPage(){
+export async function action({ request }) {
+    const formData = await request.formData();
+
+    const name = formData.get("name");
+    const description = formData.get("description");
+    const rating = formData.get("rating");
+
+    console.log("Name:", name);
+    console.log("Description:", description);
+    console.log("Rating:", rating);
+
+    return {
+        success: true,
+        message: "Review submitted successfully ",
+    };
+}
+
+export default function TestPage() {
+    const actionData = useActionData();
+
     return (
         <s-box padding="small">
-            <s-section padding="none">
-                <s-stack direction="inline" padding="none small" gap="small">
-                    <s-clickable className="tab-btn active" href="reviews">
-                        <span><s-icon type="star-filled" direction="inline"></s-icon> Reviewsa</span>
-                    </s-clickable>
-                    <s-clickable className="tab-btn" href="questions">
-                        <span><s-icon type="question-circle" direction="inline"></s-icon> Customer Questions</span>
-                    </s-clickable>
-                </s-stack>
+            <s-page>
+                <s-section heading="Give Review">
+                    <s-divider></s-divider>
+
+                    <div className="review-form-wrapper">
+                        <Form
+                            method="post"
+                            data-save-bar
+                            data-discard-confirmation
+                        >
+                            <s-stack gap="small">
+
+                                <s-text-field
+                                    label="Name a"
+                                    name="name"
+                                    required
+                                ></s-text-field>
+
+                                <s-text-area
+                                    label="Description"
+                                    name="description"
+                                    rows="4"
+                                ></s-text-area>
+
+                                <s-text-field
+                                    label="Rating"
+                                    name="rating"
+                                    required
+                                ></s-text-field>
+
+                            </s-stack>
+                        </Form>
+                    </div>
+                </s-section>
+
+                {actionData?.success && (
+                    <s-banner tone="success">
+                        {actionData.message}
+                    </s-banner>
+                )}
+
                 <style>
-                {`
-                    .tab-btn {
-                        position: relative;
-                        display: flex;
-                        flex-direction: column;
-                        color: #303030;
-                        opacity: 0.6;
-                        cursor: pointer;
-                    }
-
-                    .tab-btn.active {
-                        opacity: 1;
-                    }
-
-                    .tab-btn span {
-                        display: flex;
-                        gap: 4px;
-                        padding: 12px 16px;
-                    }
-
-                    .tab-btn:hover {
-                        opacity: 1;
-                    }
-
-                    .tab-btn::after {
-                        content: "";
-                        height: 4px;
-                        background: #303030;
-                        border-radius: 5px 5px 0 0;
-                        opacity: 0;
-                        transition: opacity 0.2s ease;
-                    }
-
-                    .tab-btn:hover::after {
-                        opacity: 0.6;
-                    }
-
-                    .tab-btn.active::after {
-                        opacity: 1;
-                    }
-                `}
-            </style>
-            </s-section>
-
-            <Outlet />
+                    {`
+                        .review-form-wrapper {
+                            width: 60%;
+                            margin: 0 auto;
+                        }
+                    `}
+                </style>
+            </s-page>
         </s-box>
     );
 }
