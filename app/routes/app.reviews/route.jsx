@@ -15,12 +15,12 @@ export default function ReviewsPage(){
             <s-box padding="small">
                 <s-section padding="none">
                     <s-stack direction="inline" padding="none small" gap="small">
-                        <div className={`tab-btn ${activeTab === "reviews" ? "active" : ""}`} onClick={() => handelTabNavigate('', 'reviews')}>
-                            <span><s-icon type="star-filled" direction="inline"></s-icon> Reviews</span>
-                        </div>
-                        <div className={`tab-btn ${activeTab === "questions" ? "active" : ""}`} onClick={() => handelTabNavigate('questions', 'questions')}>
+                        <s-clickable className={`tab-btn ${activeTab === "reviews" ? "active" : ""}`} onClick={() => handelTabNavigate('', 'reviews')}>
+                            <span><s-icon type="star-filled" direction="inline"></s-icon> Reviews </span>
+                        </s-clickable>
+                        <s-clickable className={`tab-btn ${activeTab === "questions" ? "active" : ""}`} onClick={() => handelTabNavigate('questions', 'questions')}>
                             <span><s-icon type="question-circle" direction="inline"></s-icon> Customer Questions</span>
-                        </div>
+                        </s-clickable>
                     </s-stack>
                     <style>
                     {`
