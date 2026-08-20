@@ -1,19 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 export default function ReviewsPages() {
     const [activeBtn, setActiveBtn] = useState("All Reviews");
     const navigate = useNavigate();
-    
-    function handelNavigate(path, active = activeBtn) {
-        navigate(path);
+    const location = useLocation();
+
+    function handelNavigate(params, active = activeBtn) {
+        const searchParams = new URLSearchParams(location.search);
+
+        Object.entries(params).forEach(([key, value]) => {
+            searchParams.set(key, value);
+        });
+        navigate(`?${searchParams.toString()}`);
         setActiveBtn(active);
-    }
-
-    function handelSort(event) {
-        const value = event.currentTarget.values[0];
-
-      handelNavigate(`?page=1&sort=${value}`);
     }
 
     return (
@@ -58,22 +58,22 @@ export default function ReviewsPages() {
                 <s-box padding="small">
                     <s-stack direction="inline" justifyContent="space-between" alignItems="center">
                         <s-stack direction="inline" gap="small">
-                            <button className={`sec-tab-btn ${activeBtn === "All Reviews" ? "active" : ""}`} onClick={() => handelNavigate('?page=1&review_kind=all_reviews', 'All Reviews')}>
+                            <button className={`sec-tab-btn ${activeBtn === "All Reviews" ? "active" : ""}`} onClick={() => handelNavigate({ page: "1", review_kind: "all_reviews" }, 'All Reviews')}>
                                 All Reviews
                             </button>
-                            <button className={`sec-tab-btn ${activeBtn === "Padding" ? "active" : ""}`} onClick={() => handelNavigate('?page=1&status_filter=needing_curation&review_kind=all_reviews', 'Padding')}>
-                                Padding
+                            <button className={`sec-tab-btn ${activeBtn === "Pending" ? "active" : ""}`} onClick={() => handelNavigate({ page: "1", review_kind: "pending" }, 'Pending')}>
+                                Pending
                             </button>
-                            <button className={`sec-tab-btn ${activeBtn === "Product Reviews" ? "active" : ""}`} onClick={() => handelNavigate('?page=1&review_kind=product_reviews', 'Product Reviews')}>
+                            <button className={`sec-tab-btn ${activeBtn === "Product Reviews" ? "active" : ""}`} onClick={() => handelNavigate({ page: "1", review_kind: "product_reviews" }, 'Product Reviews')}>
                                 Product Reviews
                             </button>
-                            <button className={`sec-tab-btn ${activeBtn === "Store Reviews" ? "active" : ""}`} onClick={() => handelNavigate('?page=1&review_kind=shop_reviews', 'Store Reviews')}>
+                            <button className={`sec-tab-btn ${activeBtn === "Store Reviews" ? "active" : ""}`} onClick={() => handelNavigate({ page: "1", review_kind: "shop_reviews" }, 'Store Reviews')}>
                                 Store Reviews
                             </button>
-                            <button className={`sec-tab-btn ${activeBtn === "Spam" ? "active" : ""}`} onClick={() => handelNavigate('?page=1&review_kind=spam', 'Spam')}>
+                            <button className={`sec-tab-btn ${activeBtn === "Spam" ? "active" : ""}`} onClick={() => handelNavigate({ page: "1", review_kind: "spam" }, 'Spam')}>
                                 Spam
                             </button>
-                            <button className={`sec-tab-btn ${activeBtn === "Archive" ? "active" : ""}`} onClick={() => handelNavigate('?page=1&review_kind=archive', 'Archive')}>
+                            <button className={`sec-tab-btn ${activeBtn === "Archive" ? "active" : ""}`} onClick={() => handelNavigate({ page: "1", review_kind: "archive" }, 'Archive')}>
                                 Archive
                             </button>
                             <style>
@@ -109,7 +109,7 @@ export default function ReviewsPages() {
 
                             <s-popover id="sort-popover" accessibilityLabel="Sort actions">
                                 <s-stack padding="small">
-                                    <s-choice-list name="short" onChange={() => handelNavigate('?page=1&sort=asc')}>
+                                    <s-choice-list label="Short order" name="short" onChange={(e) => handelNavigate({ page: "1", sort: e.currentTarget.values[0]})}>
                                         <s-choice value="asc">Ascending (A-Z)</s-choice>
                                         <s-choice value="dsc" selected>Descending (Z-A)</s-choice>
                                     </s-choice-list>
