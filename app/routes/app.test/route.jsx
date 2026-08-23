@@ -1,6 +1,10 @@
+import { useEffect, useRef } from "react";
 import { Form, useActionData } from "react-router";
+import prisma from "../../db.server";
+import { authenticate } from "../../shopify.server";
 
 export async function action({ request }) {
+    const {admin} = await authenticate.admin(request);
     const formData = await request.formData();
 
     const name = formData.get("name");
@@ -11,14 +15,34 @@ export async function action({ request }) {
     console.log("Description:", description);
     console.log("Rating:", rating);
 
+    const review = await prisma.reviews.create({
+        data: {
+            name: String(name),
+            description: description
+                ? String(description)
+                : null,
+            Rating: Number(rating),
+        },
+    });
+
+    console.log("Created review:", review);
+
     return {
         success: true,
-        message: "Review submitted successfully ",
+        message: "Review submitted successfully",
     };
 }
 
 export default function TestPage() {
     const actionData = useActionData();
+    const formRef = useRef(null);
+    
+    useEffect(() => {
+        if (actionData?.success) {
+            shopify.toast.show(actionData.message);
+            formRef.current?.reset();
+        }
+    }, [actionData]);
 
     return (
         <s-box padding="small">
@@ -31,6 +55,7 @@ export default function TestPage() {
                             method="post"
                             data-save-bar
                             data-discard-confirmation
+                            ref={formRef}
                         >
                             <s-stack gap="small">
 
@@ -46,22 +71,18 @@ export default function TestPage() {
                                     rows="4"
                                 ></s-text-area>
 
-                                <s-text-field
+                                <s-number-field
                                     label="Rating"
                                     name="rating"
+                                    min="0"
+                                    max="5"
                                     required
-                                ></s-text-field>
+                                ></s-number-field>
 
                             </s-stack>
                         </Form>
                     </div>
                 </s-section>
-
-                {actionData?.success && (
-                    <s-banner tone="success">
-                        {actionData.message}
-                    </s-banner>
-                )}
 
                 <style>
                     {`
