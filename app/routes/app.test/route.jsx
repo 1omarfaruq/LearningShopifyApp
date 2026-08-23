@@ -4,16 +4,24 @@ import prisma from "../../db.server";
 import { authenticate } from "../../shopify.server";
 
 export async function action({ request }) {
-    const {admin} = await authenticate.admin(request);
+    const { admin } = await authenticate.admin(request);
     const formData = await request.formData();
 
     const name = formData.get("name");
     const description = formData.get("description");
-    const rating = formData.get("rating");
+    const rating = Number(formData.get("rating"));
 
-    console.log("Name:", name);
-    console.log("Description:", description);
-    console.log("Rating:", rating);
+    // Rating validation
+    if (
+        !Number.isInteger(rating) ||
+        rating < 0 ||
+        rating > 5
+    ) {
+        return {
+            success: false,
+            error: "Rating must be between 0 and 5",
+        };
+    }
 
     const review = await prisma.reviews.create({
         data: {
@@ -21,11 +29,9 @@ export async function action({ request }) {
             description: description
                 ? String(description)
                 : null,
-            Rating: Number(rating),
+            Rating: rating,
         },
     });
-
-    console.log("Created review:", review);
 
     return {
         success: true,
@@ -35,14 +41,33 @@ export async function action({ request }) {
 
 export default function TestPage() {
     const actionData = useActionData();
-    const formRef = useRef(null);
+    const nameRef = useRef(null);
+    const descriptionRef = useRef(null);
+    const ratingRef = useRef(null);
     
     useEffect(() => {
-        if (actionData?.success) {
-            shopify.toast.show(actionData.message);
-            formRef.current?.reset();
+    if (actionData?.success) {
+        shopify.toast.show(actionData.message);
+
+        if (nameRef.current) {
+            nameRef.current.value = "";
         }
-    }, [actionData]);
+
+        if (descriptionRef.current) {
+            descriptionRef.current.value = "";
+        }
+
+        if (ratingRef.current) {
+            ratingRef.current.value = "";
+        }
+    }
+
+    if (actionData?.error) {
+        shopify.toast.show(actionData.error, {
+            isError: true,
+        });
+    }
+}, [actionData]);
 
     return (
         <s-box padding="small">
@@ -55,23 +80,25 @@ export default function TestPage() {
                             method="post"
                             data-save-bar
                             data-discard-confirmation
-                            ref={formRef}
                         >
                             <s-stack gap="small">
 
                                 <s-text-field
+                                    ref={nameRef}
                                     label="Name a"
                                     name="name"
                                     required
                                 ></s-text-field>
 
                                 <s-text-area
+                                    ref={descriptionRef}
                                     label="Description"
                                     name="description"
                                     rows="4"
                                 ></s-text-area>
 
                                 <s-number-field
+                                    ref={ratingRef}
                                     label="Rating"
                                     name="rating"
                                     min="0"
