@@ -1,10 +1,20 @@
 import { useEffect, useRef } from "react";
-import { Form, useActionData } from "react-router";
+import { Form, useActionData, useLoaderData } from "react-router";
 import prisma from "../../db.server";
 import { authenticate } from "../../shopify.server";
 
+export async function loader({request}) {
+    await authenticate.admin(request);
+    const reviews = await prisma.reviews.findMany({
+        orderBy: {
+            id: "desc"
+        }
+    });
+
+    return {reviews};
+}
+
 export async function action({ request }) {
-    const { admin } = await authenticate.admin(request);
     const formData = await request.formData();
 
     const name = formData.get("name");
@@ -44,6 +54,7 @@ export default function TestPage() {
     const nameRef = useRef(null);
     const descriptionRef = useRef(null);
     const ratingRef = useRef(null);
+    const { reviews } = useLoaderData();
     
     useEffect(() => {
     if (actionData?.success) {
@@ -119,6 +130,71 @@ export default function TestPage() {
                         }
                     `}
                 </style>
+
+                <s-section heading="Review List">
+                    <s-table>
+                        <s-table-header-row>
+                            <s-table-header>
+                                ID
+                            </s-table-header>
+
+                            <s-table-header>
+                                Name
+                            </s-table-header>
+
+                            <s-table-header>
+                                Description
+                            </s-table-header>
+
+                            <s-table-header>
+                                Rating
+                            </s-table-header>
+
+                            <s-table-header>
+                                Action
+                            </s-table-header>
+                        </s-table-header-row>
+
+                        <s-table-body>
+                            {reviews.map((review) => (
+                                <s-table-row key={review.id}>
+
+                                    <s-table-cell>
+                                        {review.id}
+                                    </s-table-cell>
+
+                                    <s-table-cell>
+                                        {review.name}
+                                    </s-table-cell>
+
+                                    <s-table-cell>
+                                        {review.description || "-"}
+                                    </s-table-cell>
+
+                                    <s-table-cell>
+                                        {review.Rating}
+                                    </s-table-cell>
+
+                                    <s-table-cell>
+                                        <s-button
+                                            icon="menu-horizontal"
+                                            variant="tertiary"
+                                            accessibilityLabel="More actions"
+                                            commandFor={`row-actions-${review.id}`}
+                                        ></s-button>
+
+                                        <s-menu id={`row-actions-${review.id}`} accessibilityLabel="More actions">
+                                            <s-button icon="edit">Edit</s-button>
+                                            <s-button icon="duplicate">Duplicate</s-button>
+                                            <s-button icon="archive">Archive</s-button>
+                                            <s-button icon="delete" tone="critical">Delete</s-button>
+                                        </s-menu>
+                                    </s-table-cell>
+                                </s-table-row>
+                            ))}
+                        </s-table-body>
+                    </s-table>
+                </s-section>
             </s-page>
         </s-box>
     );
