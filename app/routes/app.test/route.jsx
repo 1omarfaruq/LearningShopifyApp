@@ -1,17 +1,44 @@
 import { useEffect, useRef } from "react";
-import { Form, useActionData, useLoaderData } from "react-router";
+import { Form, useActionData, useLoaderData, useNavigate } from "react-router";
 import prisma from "../../db.server";
 import { authenticate } from "../../shopify.server";
 
-export async function loader({request}) {
+export async function loader({ request }) {
     await authenticate.admin(request);
+
+    const url = new URL(request.url);
+
+    const sort = url.searchParams.get("sort") || "id";
+    const direction =
+        url.searchParams.get("direction") || "desc";
+
+    const allowedSortFields = [
+        "id",
+        "name",
+        "description",
+        "Rating"
+    ];
+
+    const sortField = allowedSortFields.includes(sort)
+        ? sort
+        : "id";
+
+    const sortDirection =
+        direction === "asc"
+            ? "asc"
+            : "desc";
+
     const reviews = await prisma.reviews.findMany({
         orderBy: {
-            id: "desc"
-        }
+            [sortField]: sortDirection,
+        },
     });
 
-    return {reviews};
+    return {
+        reviews,
+        sort: sortField,
+        direction: sortDirection,
+    };
 }
 
 export async function action({ request }) {
@@ -54,31 +81,49 @@ export default function TestPage() {
     const nameRef = useRef(null);
     const descriptionRef = useRef(null);
     const ratingRef = useRef(null);
-    const { reviews } = useLoaderData();
-    
+    const {
+        reviews,
+        sort,
+        direction
+    } = useLoaderData();
+    const navigate = useNavigate();
+
     useEffect(() => {
-    if (actionData?.success) {
-        shopify.toast.show(actionData.message);
+        if (actionData?.success) {
+            shopify.toast.show(actionData.message);
 
-        if (nameRef.current) {
-            nameRef.current.value = "";
+            if (nameRef.current) {
+                nameRef.current.value = "";
+            }
+
+            if (descriptionRef.current) {
+                descriptionRef.current.value = "";
+            }
+
+            if (ratingRef.current) {
+                ratingRef.current.value = "";
+            }
         }
 
-        if (descriptionRef.current) {
-            descriptionRef.current.value = "";
+        if (actionData?.error) {
+            shopify.toast.show(actionData.error, {
+                isError: true,
+            });
         }
+    }, [actionData]);
 
-        if (ratingRef.current) {
-            ratingRef.current.value = "";
-        }
-    }
+    const handleSort = (column) => {
 
-    if (actionData?.error) {
-        shopify.toast.show(actionData.error, {
-            isError: true,
-        });
-    }
-}, [actionData]);
+        const newDirection =
+            sort === column && direction === "asc"
+                ? "desc"
+                : "asc";
+
+        navigate(
+            `?sort=${column}&direction=${newDirection}`
+        );
+    };
+
 
     return (
         <s-box padding="small">
@@ -135,7 +180,10 @@ export default function TestPage() {
                     <s-table>
                         <s-table-header-row>
                             <s-table-header>
-                                ID
+                                <s-stack direction="inline" justifyContent="space-between" alignItems="center">
+                                    ID 
+                                    <s-button icon="sort" variant="tertiary" onClick={() => handleSort("id")}></s-button>
+                                </s-stack>
                             </s-table-header>
 
                             <s-table-header>
