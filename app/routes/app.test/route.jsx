@@ -60,7 +60,7 @@ export async function action({ request }) {
         };
     }
 
-    const review = await prisma.reviews.create({
+    await prisma.reviews.create({
         data: {
             name: String(name),
             description: description
@@ -87,6 +87,8 @@ export default function TestPage() {
         direction
     } = useLoaderData();
     const navigate = useNavigate();
+
+ 
 
     useEffect(() => {
         if (actionData?.success) {
@@ -124,6 +126,11 @@ export default function TestPage() {
         );
     };
 
+       const handleEdit = (id)=> {
+    console.log("Editing review:", id);
+
+    navigate(`/app/test/${id}/edit`);
+}
 
     return (
         <s-box padding="small">
@@ -232,7 +239,7 @@ export default function TestPage() {
                                         ></s-button>
 
                                         <s-menu id={`row-actions-${review.id}`} accessibilityLabel="More actions">
-                                            <s-button icon="edit">Edit</s-button>
+                                            <s-button icon="edit" onClick={()=>handleEdit(review.id)}>Edit 22</s-button>
                                             <s-button icon="duplicate">Duplicate</s-button>
                                             <s-button icon="archive">Archive</s-button>
                                             <s-button icon="delete" tone="critical">Delete</s-button>
