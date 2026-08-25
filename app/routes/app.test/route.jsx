@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { Form, useActionData, useLoaderData, useNavigate } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { Form, useActionData, useFetcher, useLoaderData, useNavigate } from "react-router";
 import prisma from "../../db.server";
 import { authenticate } from "../../shopify.server";
 
@@ -43,7 +43,6 @@ export async function loader({ request }) {
 
 export async function action({ request }) {
     const formData = await request.formData();
-
     const name = formData.get("name");
     const description = formData.get("description");
     const rating = Number(formData.get("rating"));
@@ -81,13 +80,17 @@ export default function TestPage() {
     const nameRef = useRef(null);
     const descriptionRef = useRef(null);
     const ratingRef = useRef(null);
+    const editFetcher = useFetcher()
     const {
         reviews,
         sort,
         direction
     } = useLoaderData();
     const navigate = useNavigate();
-
+    const editNameRef = useRef(null);
+    const editDescriptionRef = useRef(null);
+    const editRatingRef = useRef(null);
+    const [editingId, setEditingId] = useState(null);
  
 
     useEffect(() => {
@@ -126,11 +129,39 @@ export default function TestPage() {
         );
     };
 
-       const handleEdit = (id)=> {
-    console.log("Editing review:", id);
+    const handleEdit = (id)=> {
+        setEditingId(id);
+        console.log("Editing review:", id);
 
-    navigate(`/app/test/${id}/edit`);
-}
+        editFetcher.load(`/app/test/${id}/edit`);
+
+        console.log('dataaaaaaaaaaaaaaa');
+    }
+
+    useEffect(() => {
+        if (editFetcher.data) {
+            const review = editFetcher.data;
+
+            if (editNameRef.current) {
+                editNameRef.current.value = review.name;
+            }
+
+            if (editDescriptionRef.current) {
+                editDescriptionRef.current.value = review.description || "";
+            }
+
+            if (editRatingRef.current) {
+                editRatingRef.current.value = String(review.Rating);
+            }
+
+            const modal = document.getElementById ("edit-review-modal");
+
+            console.log("modallllllllllllllllllllllllllllllll:", modal);
+            console.log("showOverlay:", modal?.showOverlay);
+
+            modal?.showOverlay();
+        }
+    }, [editFetcher.data]);
 
     return (
         <s-box padding="small">
@@ -239,7 +270,12 @@ export default function TestPage() {
                                         ></s-button>
 
                                         <s-menu id={`row-actions-${review.id}`} accessibilityLabel="More actions">
-                                            <s-button icon="edit" onClick={()=>handleEdit(review.id)}>Edit 22</s-button>
+                                            <s-button
+                                                icon="edit"
+                                                loading={editFetcher.state === "loading" && editingId === review.id}
+                                                onClick={()=>handleEdit(review.id)}>
+                                                    Edit
+                                            </s-button>
                                             <s-button icon="duplicate">Duplicate</s-button>
                                             <s-button icon="archive">Archive</s-button>
                                             <s-button icon="delete" tone="critical">Delete</s-button>
@@ -250,6 +286,51 @@ export default function TestPage() {
                         </s-table-body>
                     </s-table>
                 </s-section>
+
+                <s-modal
+                    id="edit-review-modal"
+                    heading="Edit Review"
+                >
+                    <s-stack gap="base">
+
+                        <s-text-field
+                            ref={editNameRef}
+                            label="Name"
+                            name="name"
+                        ></s-text-field>
+
+                        <s-text-area
+                            ref={editDescriptionRef}
+                            label="Description"
+                            name="description"
+                            rows="4"
+                        ></s-text-area>
+
+                        <s-number-field
+                            ref={editRatingRef}
+                            label="Rating"
+                            name="rating"
+                            min="0"
+                            max="5"
+                        ></s-number-field>
+
+                    </s-stack>
+
+                    <s-button
+                        slot="secondary-actions"
+                        commandFor="edit-review-modal"
+                        command="--hide"
+                    >
+                        Cancel
+                    </s-button>
+
+                    <s-button
+                        slot="primary-action"
+                        variant="primary"
+                    >
+                        Update Review
+                    </s-button>
+                </s-modal>
             </s-page>
         </s-box>
     );
