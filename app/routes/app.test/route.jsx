@@ -42,12 +42,52 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
+    await authenticate.admin(request);
+
     const formData = await request.formData();
+
+    const intent = formData.get("intent");
+
+    // DELETE REVIEW
+    if (intent === "delete") {
+        const id = Number(formData.get("id"));
+
+        if (!Number.isInteger(id)) {
+            return {
+                type: "delete",
+                success: false,
+                error: "Invalid review ID",
+            };
+        }
+
+        const review = await prisma.reviews.findUnique({
+            where: { id },
+        });
+
+        if (!review) {
+            return {
+                type: "delete",
+                success: false,
+                error: "Review not found",
+            };
+        }
+
+        await prisma.reviews.delete({
+            where: { id },
+        });
+
+        return {
+            type: "delete",
+            success: true,
+            message: "Review deleted successfully",
+        };
+    }
+
+    // CREATE REVIEW
     const name = formData.get("name");
     const description = formData.get("description");
     const rating = Number(formData.get("rating"));
 
-    // Rating validation
     if (
         !Number.isInteger(rating) ||
         rating < 0 ||
@@ -77,7 +117,8 @@ export async function action({ request }) {
 
 export default function TestPage() {
     const actionData = useActionData();
-    const editFetcher = useFetcher()
+    const editFetcher = useFetcher();
+    const deleteFetcher = useFetcher();
     const {
         reviews,
         sort,
@@ -95,6 +136,7 @@ export default function TestPage() {
     const editDescriptionRef = useRef(null);
     const editRatingRef = useRef(null);
     const [editingId, setEditingId] = useState(null);
+    const [deletingId, setDeletingId] = useState(null);
  
 
     useEffect(() => {
@@ -203,6 +245,49 @@ export default function TestPage() {
             }
         }
     }, [editFetcher.data, editFetcher.state]);
+
+    //handel delete with confermation
+    const handleDelete = (id) => {
+        setDeletingId(id);
+
+        const modal = document.getElementById(
+            "delete-review-modal"
+        );
+
+        modal?.showOverlay();
+    };
+
+    //handle delete response
+    useEffect(() => {
+        if (
+            deleteFetcher.state === "idle" &&
+            deleteFetcher.data?.type === "delete"
+        ) {
+            if (deleteFetcher.data.success) {
+                shopify.toast.show(
+                    deleteFetcher.data.message
+                );
+
+                const modal =
+                    document.getElementById(
+                        "delete-review-modal"
+                    );
+
+                modal?.hideOverlay();
+
+                setDeletingId(null);
+            }
+
+            if (deleteFetcher.data.error) {
+                shopify.toast.show(
+                    deleteFetcher.data.error,
+                    {
+                        isError: true,
+                    }
+                );
+            }
+        }
+    }, [deleteFetcher.data, deleteFetcher.state]);
 
     return (
         <s-box padding="small">
@@ -317,9 +402,11 @@ export default function TestPage() {
                                                 onClick={()=>handleEdit(review.id)}>
                                                     Edit
                                             </s-button>
-                                            <s-button icon="duplicate">Duplicate</s-button>
-                                            <s-button icon="archive">Archive</s-button>
-                                            <s-button icon="delete" tone="critical">Delete</s-button>
+                                            <s-button
+                                                icon="delete"
+                                                tone="critical"
+                                                onClick={() => handleDelete(review.id)}
+                                                >Delete</s-button>
                                         </s-menu>
                                     </s-table-cell>
                                 </s-table-row>
@@ -381,6 +468,50 @@ export default function TestPage() {
                             </s-button>
                         </editFetcher.Form>
                     )}
+                </s-modal>
+
+                {/* Delete model */}
+                <s-modal
+                    id="delete-review-modal"
+                    heading="Delete review?"
+                >
+                    <s-stack gap="base">
+                        <s-paragraph>
+                            Are you sure you want to delete this review?
+                            This action cannot be undone.
+                        </s-paragraph>
+                    </s-stack>
+
+                    <s-button
+                        slot="secondary-actions"
+                        commandFor="delete-review-modal"
+                        command="--hide"
+                        onClick={() => setDeletingId(null)}
+                    >
+                        Cancel
+                    </s-button>
+
+                    <s-button
+                        slot="primary-action"
+                        variant="primary"
+                        tone="critical"
+                        loading={deleteFetcher.state === "submitting"}
+                        onClick={() => {
+                            if (!deletingId) return;
+
+                            deleteFetcher.submit(
+                                {
+                                    intent: "delete",
+                                    id: String(deletingId),
+                                },
+                                {
+                                    method: "post",
+                                }
+                            );
+                        }}
+                    >
+                        Delete review
+                    </s-button>
                 </s-modal>
             </s-page>
         </s-box>
