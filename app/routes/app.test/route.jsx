@@ -77,9 +77,6 @@ export async function action({ request }) {
 
 export default function TestPage() {
     const actionData = useActionData();
-    const nameRef = useRef(null);
-    const descriptionRef = useRef(null);
-    const ratingRef = useRef(null);
     const editFetcher = useFetcher()
     const {
         reviews,
@@ -87,6 +84,13 @@ export default function TestPage() {
         direction
     } = useLoaderData();
     const navigate = useNavigate();
+
+    //Create form fields references
+    const nameRef = useRef(null);
+    const descriptionRef = useRef(null);
+    const ratingRef = useRef(null);
+
+    //Edit modal form references
     const editNameRef = useRef(null);
     const editDescriptionRef = useRef(null);
     const editRatingRef = useRef(null);
@@ -131,37 +135,74 @@ export default function TestPage() {
 
     const handleEdit = (id)=> {
         setEditingId(id);
-        console.log("Editing review:", id);
 
         editFetcher.load(`/app/test/${id}/edit`);
-
-        console.log('dataaaaaaaaaaaaaaa');
     }
 
+    //Fetch reviews for modal and open modal
     useEffect(() => {
-        if (editFetcher.data) {
-            const review = editFetcher.data;
+        if (
+            editFetcher.state === "idle" &&
+            editFetcher.data?.type === "load" &&
+            editFetcher.data?.review
+        ) {
+            const review = editFetcher.data.review;
 
             if (editNameRef.current) {
-                editNameRef.current.value = review.name;
+                editNameRef.current.value =
+                    review.name || "";
             }
 
             if (editDescriptionRef.current) {
-                editDescriptionRef.current.value = review.description || "";
+                editDescriptionRef.current.value =
+                    review.description || "";
             }
 
             if (editRatingRef.current) {
-                editRatingRef.current.value = String(review.Rating);
+                editRatingRef.current.value =
+                    String(review.Rating ?? "");
             }
 
-            const modal = document.getElementById ("edit-review-modal");
-
-            console.log("modallllllllllllllllllllllllllllllll:", modal);
-            console.log("showOverlay:", modal?.showOverlay);
+            const modal =
+                document.getElementById(
+                    "edit-review-modal"
+                );
 
             modal?.showOverlay();
         }
-    }, [editFetcher.data]);
+    }, [editFetcher.data, editFetcher.state]);
+
+    //update response handle
+    useEffect(() => {
+        if (
+            editFetcher.state === "idle" &&
+            editFetcher.data?.type === "update"
+        ) {
+            if (editFetcher.data.success) {
+                shopify.toast.show(
+                    editFetcher.data.message
+                );
+
+                const modal =
+                    document.getElementById(
+                        "edit-review-modal"
+                    );
+
+                modal?.hideOverlay();
+
+                setEditingId(null);
+            }
+
+            if (editFetcher.data.error) {
+                shopify.toast.show(
+                    editFetcher.data.error,
+                    {
+                        isError: true,
+                    }
+                );
+            }
+        }
+    }, [editFetcher.data, editFetcher.state]);
 
     return (
         <s-box padding="small">
@@ -291,45 +332,55 @@ export default function TestPage() {
                     id="edit-review-modal"
                     heading="Edit Review"
                 >
-                    <s-stack gap="base">
+                    {editingId && (
+                        <editFetcher.Form
+                            method="post"
+                            action={`/app/test/${editingId}/edit`}
+                        >
+                            <s-stack gap="base">
 
-                        <s-text-field
-                            ref={editNameRef}
-                            label="Name"
-                            name="name"
-                        ></s-text-field>
+                                <s-text-field
+                                    ref={editNameRef}
+                                    label="Name"
+                                    name="name"
+                                ></s-text-field>
 
-                        <s-text-area
-                            ref={editDescriptionRef}
-                            label="Description"
-                            name="description"
-                            rows="4"
-                        ></s-text-area>
+                                <s-text-area
+                                    ref={editDescriptionRef}
+                                    label="Description"
+                                    name="description"
+                                    rows="4"
+                                ></s-text-area>
 
-                        <s-number-field
-                            ref={editRatingRef}
-                            label="Rating"
-                            name="rating"
-                            min="0"
-                            max="5"
-                        ></s-number-field>
+                                <s-number-field
+                                    ref={editRatingRef}
+                                    label="Rating"
+                                    name="rating"
+                                    min="0"
+                                    max="5"
+                                ></s-number-field>
 
-                    </s-stack>
+                            </s-stack>
+                            <s-box padding="small"></s-box>
+                            <s-button
+                                slot="secondary-actions"
+                                commandFor="edit-review-modal"
+                                command="--hide"
+                                style={{ marginRight: "12px" }}
+                            >
+                                Cancel
+                            </s-button>
 
-                    <s-button
-                        slot="secondary-actions"
-                        commandFor="edit-review-modal"
-                        command="--hide"
-                    >
-                        Cancel
-                    </s-button>
-
-                    <s-button
-                        slot="primary-action"
-                        variant="primary"
-                    >
-                        Update Review
-                    </s-button>
+                            <s-button
+                                type="submit"
+                                slot="primary-action"
+                                variant="primary"
+                                loading={editFetcher.state === "submitting"}
+                            >
+                                Update Review
+                            </s-button>
+                        </editFetcher.Form>
+                    )}
                 </s-modal>
             </s-page>
         </s-box>
