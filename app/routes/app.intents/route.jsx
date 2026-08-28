@@ -146,6 +146,7 @@ export default function IntentsPages(){
             <s-page>
                 <s-table>
                     <s-table-header-row>
+                        <s-table-header>SL</s-table-header>
                         <s-table-header>Product</s-table-header>
                         <s-table-header>Status</s-table-header>
                         <s-table-header>Inventory</s-table-header>
@@ -153,12 +154,15 @@ export default function IntentsPages(){
                     </s-table-header-row>
 
                     <s-table-body>
-                        {products.map((product) => {
+                        {products.map((product, index) => {
                             const image = product.featuredMedia?.preview?.image;
+                            const serialNumber = (currentPage - 1) * 5 + index + 1;
 
                             return (
                             <s-table-row key={product.id}>
-
+                                <s-table-cell>
+                                    {serialNumber}
+                                </s-table-cell>
                                 <s-table-cell>
                                 <div
                                     style={{
