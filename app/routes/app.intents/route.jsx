@@ -1,269 +1,270 @@
-import { useState } from "react";
 import { useLoaderData, useLocation, useNavigate } from "react-router";
 import { authenticate } from "../../shopify.server";
 
 export async function loader({ request }) {
   const { admin } = await authenticate.admin(request);
 
-  const url = new URL(request.url);
+  const response = await admin.graphql(`
+    #graphql
+    query GetProducts {
+      products(first: 15) {
+        edges {
+          cursor
+          node {
+            id
+            title
+            status
+            totalInventory
+            vendor
 
-  const after = url.searchParams.get("after");
-  const before = url.searchParams.get("before");
-
-  let queryVariables;
-
-  if (before) {
-    queryVariables = {
-      first: null,
-      last: 5,
-      after: null,
-      before,
-    };
-  } else {
-    queryVariables = {
-      first: 5,
-      last: null,
-      after: after || null,
-      before: null,
-    };
-  }
-
-  const response = await admin.graphql(
-    `#graphql
-    query GetProducts(
-      $first: Int
-      $last: Int
-      $after: String
-      $before: String
-    ) {
-
-      products(
-        first: $first
-        last: $last
-        after: $after
-        before: $before
-      ) {
-
-        nodes {
-          id
-          title
-          status
-          totalInventory
-          vendor
-
-          featuredMedia {
-            preview {
-              image {
-                url
-                altText
+            featuredMedia {
+              preview {
+                image {
+                  url
+                  altText
+                }
               }
             }
           }
         }
-
-        pageInfo {
-          hasNextPage
-          hasPreviousPage
-          startCursor
-          endCursor
-        }
       }
     }
-    `,
-    {
-      variables: queryVariables,
-    }
-  );
+  `);
 
   const json = await response.json();
 
+  const edges = json.data.products.edges;
+
   return {
-    products: json.data.products.nodes,
-    pageInfo: json.data.products.pageInfo,
+    edges,
   };
 }
 
-export default function IntentsPages(){
-    const { products, pageInfo } = useLoaderData();
-    const navigate = useNavigate();
-    const location = useLocation();
+export default function IntentsPages() {
+  const { edges } = useLoaderData();
 
-    const currentPage = Number(
-        new URLSearchParams(location.search).get("page") || 1
-    );
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    const [pageCursors, setPageCursors] = useState({
-        1: null,
-    });
+  const pageSize = 5;
 
-    const handleNext = () => {
-        if (!pageInfo.hasNextPage) return;
+  const currentPage = Number(
+    new URLSearchParams(location.search).get("page") || 1
+  );
 
-        const nextPage = currentPage + 1;
+  const totalPages = Math.ceil(edges.length / pageSize);
 
-        setPageCursors((prev) => ({
-            ...prev,
-            [nextPage]: pageInfo.endCursor,
-        }));
+  const startIndex = (currentPage - 1) * pageSize;
 
-        navigate(
-            `?page=${nextPage}&after=${encodeURIComponent(
-            pageInfo.endCursor
-            )}`
-        );
-    };
+  const currentEdges = edges.slice(
+    startIndex,
+    startIndex + pageSize
+  );
 
-    const handlePrevious = () => {
-        if (!pageInfo.hasPreviousPage) return;
+  const products = currentEdges.map((edge) => edge.node);
 
-        const previousPage = currentPage - 1;
+  const handlePageClick = (page) => {
+    if (page === currentPage) return;
 
-        navigate(
-            `?page=${previousPage}&before=${encodeURIComponent(
-            pageInfo.startCursor
-            )}`
-        );
-    };
+    navigate(`?page=${page}`);
+  };
 
-    const handlePageClick = (page) => {
-        if (page === currentPage) return;
+  const handlePrevious = () => {
+    if (currentPage <= 1) return;
 
-        if (page === 1) {
-            navigate("?page=1");
-            return;
-        }
+    navigate(`?page=${currentPage - 1}`);
+  };
 
-        const cursor = pageCursors[page];
+  const handleNext = () => {
+    if (currentPage >= totalPages) return;
 
-        if (!cursor) return;
+    navigate(`?page=${currentPage + 1}`);
+  };
 
-        navigate(
-            `?page=${page}&after=${encodeURIComponent(cursor)}`
-        );
-    };
-    return <>
-        <s-box padding="small">
-            <s-page>
-                <s-table>
-                    <s-table-header-row>
-                        <s-table-header>SL</s-table-header>
-                        <s-table-header>Product</s-table-header>
-                        <s-table-header>Status</s-table-header>
-                        <s-table-header>Inventory</s-table-header>
-                        <s-table-header>Vendor</s-table-header>
-                    </s-table-header-row>
+  return (
+    <>
+      <s-box padding="small">
+        <s-page>
+          <s-table>
+            <s-table-header-row>
+              <s-table-header>SL</s-table-header>
+              <s-table-header>Product</s-table-header>
+              <s-table-header>Status</s-table-header>
+              <s-table-header>Inventory</s-table-header>
+              <s-table-header>Vendor</s-table-header>
+            </s-table-header-row>
 
-                    <s-table-body>
-                        {products.map((product, index) => {
-                            const image = product.featuredMedia?.preview?.image;
-                            const serialNumber = (currentPage - 1) * 5 + index + 1;
+            <s-table-body>
+              {products.map((product, index) => {
+                const image =
+                  product.featuredMedia?.preview?.image;
 
-                            return (
-                            <s-table-row key={product.id}>
-                                <s-table-cell>
-                                    {serialNumber}
-                                </s-table-cell>
-                                <s-table-cell>
-                                <div
-                                    style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "12px",
-                                    }}
-                                >
-                                    {image ? (
-                                    <img
-                                        src={image.url}
-                                        alt={image.altText || product.title}
-                                        width="50"
-                                        height="50"
-                                        style={{
-                                        objectFit: "cover",
-                                        borderRadius: "6px",
-                                        }}
-                                    />
-                                    ) : (
-                                    <div
-                                        style={{
-                                        width: "50px",
-                                        height: "50px",
-                                        background: "#eee",
-                                        borderRadius: "6px",
-                                        }}
-                                    />
-                                    )}
+                const serialNumber =
+                  (currentPage - 1) * pageSize +
+                  index +
+                  1;
 
-                                    <span>{product.title}</span>
-                                </div>
-                                </s-table-cell>
+                return (
+                  <s-table-row key={product.id}>
+                    {/* Serial */}
+                    <s-table-cell>
+                      {serialNumber}
+                    </s-table-cell>
 
-                                <s-table-cell>
-                                {product.status}
-                                </s-table-cell>
-
-                                <s-table-cell>
-                                {product.totalInventory}
-                                </s-table-cell>
-
-                                <s-table-cell>
-                                {product.vendor || "-"}
-                                </s-table-cell>
-
-                            </s-table-row>
-                            );
-                        })}
-
-                        </s-table-body>
-                </s-table>
-
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: "8px",
-                        marginTop: "20px",
-                    }}
-                    >
-                    <button
-                        onClick={handlePrevious}
-                        disabled={!pageInfo.hasPreviousPage}
-                    >
-                        Previous
-                    </button>
-
-                    {[1, 2, 3].map((page) => (
-                        <button
-                        key={page}
-                        onClick={() => handlePageClick(page)}
+                    {/* Product */}
+                    <s-table-cell>
+                      <div
                         style={{
-                            padding: "8px 12px",
-                            borderRadius: "6px",
-                            border: "1px solid #ccc",
-                            fontWeight: currentPage === page ? "600" : "400",
-                            background:
-                            currentPage === page
-                                ? "#111"
-                                : "#fff",
-                            color:
-                            currentPage === page
-                                ? "#fff"
-                                : "#111",
-                            cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
                         }}
-                        >
-                        {page}
-                        </button>
-                    ))}
+                      >
+                        {image ? (
+                          <img
+                            src={image.url}
+                            alt={
+                              image.altText ||
+                              product.title
+                            }
+                            width="50"
+                            height="50"
+                            style={{
+                              width: "50px",
+                              height: "50px",
+                              objectFit: "cover",
+                              borderRadius: "6px",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "50px",
+                              height: "50px",
+                              background: "#eee",
+                              borderRadius: "6px",
+                            }}
+                          />
+                        )}
 
-                    <button
-                        onClick={handleNext}
-                        disabled={!pageInfo.hasNextPage}
-                    >
-                        Next
-                    </button>
-                    </div>
-            </s-page>
-        </s-box>
-    </>;
+                        <span>
+                          {product.title}
+                        </span>
+                      </div>
+                    </s-table-cell>
+
+                    {/* Status */}
+                    <s-table-cell>
+                      {product.status}
+                    </s-table-cell>
+
+                    {/* Inventory */}
+                    <s-table-cell>
+                      {product.totalInventory}
+                    </s-table-cell>
+
+                    {/* Vendor */}
+                    <s-table-cell>
+                      {product.vendor || "-"}
+                    </s-table-cell>
+                  </s-table-row>
+                );
+              })}
+            </s-table-body>
+          </s-table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: "8px",
+                marginTop: "20px",
+                marginBottom: "20px",
+              }}
+            >
+              {/* Previous */}
+              <button
+                onClick={handlePrevious}
+                disabled={currentPage === 1}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                  cursor:
+                    currentPage === 1
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity:
+                    currentPage === 1
+                      ? 0.5
+                      : 1,
+                }}
+              >
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              {Array.from(
+                { length: totalPages },
+                (_, index) => index + 1
+              ).map((page) => (
+                <button
+                  key={page}
+                  onClick={() =>
+                    handlePageClick(page)
+                  }
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "6px",
+                    border: "1px solid #ccc",
+                    fontWeight:
+                      currentPage === page
+                        ? "600"
+                        : "400",
+                    background:
+                      currentPage === page
+                        ? "#111"
+                        : "#fff",
+                    color:
+                      currentPage === page
+                        ? "#fff"
+                        : "#111",
+                    cursor: "pointer",
+                  }}
+                >
+                  {page}
+                </button>
+              ))}
+
+              {/* Next */}
+              <button
+                onClick={handleNext}
+                disabled={
+                  currentPage === totalPages
+                }
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                  cursor:
+                    currentPage === totalPages
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity:
+                    currentPage === totalPages
+                      ? 0.5
+                      : 1,
+                }}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </s-page>
+      </s-box>
+    </>
+  );
 }
