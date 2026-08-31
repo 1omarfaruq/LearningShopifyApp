@@ -418,56 +418,65 @@ export default function TestPage() {
                 <s-modal
                     id="edit-review-modal"
                     heading="Edit Review"
-                >
+                    >
                     {editingId && (
                         <editFetcher.Form
-                            method="post"
-                            action={`/app/test/${editingId}/edit`}
+                        id="edit-review-form"
+                        method="post"
+                        action={`/app/test/${editingId}/edit`}
                         >
-                            <s-stack gap="base">
+                        <s-stack gap="base">
 
-                                <s-text-field
-                                    ref={editNameRef}
-                                    label="Name"
-                                    name="name"
-                                ></s-text-field>
+                            <s-text-field
+                            ref={editNameRef}
+                            label="Name"
+                            name="name"
+                            ></s-text-field>
 
-                                <s-text-area
-                                    ref={editDescriptionRef}
-                                    label="Description"
-                                    name="description"
-                                    rows="4"
-                                ></s-text-area>
+                            <s-text-area
+                            ref={editDescriptionRef}
+                            label="Description"
+                            name="description"
+                            rows="4"
+                            ></s-text-area>
 
-                                <s-number-field
-                                    ref={editRatingRef}
-                                    label="Rating"
-                                    name="rating"
-                                    min="0"
-                                    max="5"
-                                ></s-number-field>
+                            <s-number-field
+                            ref={editRatingRef}
+                            label="Rating"
+                            name="rating"
+                            min="0"
+                            max="5"
+                            ></s-number-field>
 
-                            </s-stack>
-                            <s-box padding="small"></s-box>
-                            <s-button
-                                slot="secondary-actions"
-                                commandFor="edit-review-modal"
-                                command="--hide"
-                                style={{ marginRight: "12px" }}
-                            >
-                                Cancel
-                            </s-button>
-
-                            <s-button
-                                type="submit"
-                                slot="primary-action"
-                                variant="primary"
-                                loading={editFetcher.state === "submitting"}
-                            >
-                                Update Review
-                            </s-button>
+                        </s-stack>
                         </editFetcher.Form>
                     )}
+
+                    <s-button
+                        slot="secondary-actions"
+                        commandFor="edit-review-modal"
+                        command="--hide"
+                    >
+                        Cancel
+                    </s-button>
+
+                    <s-button
+                        slot="primary-action"
+                        variant="primary"
+                        loading={editFetcher.state === "submitting"}
+                        onClick={() => {
+                            const form = document.getElementById("edit-review-form");
+
+                            if (!form || !editingId) return;
+
+                            editFetcher.submit(form, {
+                                method: "post",
+                                action: `/app/test/${editingId}/edit`,
+                            });
+                        }}
+                    >
+                        Update Review
+                    </s-button>
                 </s-modal>
 
                 {/* Delete model */}

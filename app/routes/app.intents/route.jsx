@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import {
-    useLoaderData,
-    useLocation,
-    useNavigate,
-    useRevalidator,
+  useFetcher,
+  useLoaderData,
+  useLocation,
+  useNavigate,
+  useRevalidator,
 } from "react-router";
 import { authenticate } from "../../shopify.server";
 
@@ -83,12 +85,66 @@ export async function loader({ request }) {
   };
 }
 
+export async function action({ request }) {
+  const { admin } = await authenticate.admin(request);
+
+  const formData = await request.formData();
+
+  const intent = formData.get("intent");
+  const productId = formData.get("productId");
+
+  if (intent !== "delete-product") {
+    return {
+      success: false,
+      message: "Invalid action",
+    };
+  }
+
+  const response = await admin.graphql(
+    `#graphql
+    mutation DeleteProduct($input: ProductDeleteInput!) {
+      productDelete(input: $input) {
+        deletedProductId
+        userErrors {
+          field
+          message
+        }
+      }
+    }`,
+    {
+      variables: {
+        input: {
+          id: productId,
+        },
+      },
+    }
+  );
+
+  const json = await response.json();
+
+  const result = json.data.productDelete;
+
+  if (result.userErrors.length > 0) {
+    return {
+      success: false,
+      errors: result.userErrors,
+    };
+  }
+
+  return {
+    success: true,
+    deletedProductId: result.deletedProductId,
+  };
+}
+
 export default function IntentsPages() {
   const { edges, pageInfo } = useLoaderData();
 
   const navigate = useNavigate();
   const location = useLocation();
   const revalidator = useRevalidator();
+  const fetcher = useFetcher();
+  const [ deleteProduct, setDeleteProduct ] = useState(null);
 
   const pageSize = 10;
 
@@ -144,6 +200,61 @@ export default function IntentsPages() {
     }
   };
 
+  const handleEditProduct = async (productId) => {
+    try {
+        console.log("products iddddddddddddddddd", productId);
+        const activity = await shopify.intents.invoke('edit:shopify/Product', {
+        value: productId,
+        });
+
+        const response = await activity.complete;
+
+        if (response.code === 'ok') {
+            console.log('Product updated:', response.data);
+            revalidator.revalidate();
+        } else if (response.code === 'closed') {
+            console.log('Edit cancelled by user');
+        } else if (response.code === 'error') {
+            console.log('Error:', response.message);
+        }
+    } catch (error) {
+        console.error(
+        "Failed to open product creation intent:",
+        error
+      );
+    }
+  }
+
+  const handleDeleteProduct = (product) => {
+    setDeleteProduct(product);
+
+    setTimeout(() => {
+      shopify.modal.show("delete-product-modal");
+    }, 0);
+  };
+
+  useEffect(() => {
+  if (!fetcher.data) return;
+
+  if (fetcher.data.success) {
+    shopify.toast.show(
+      "Product deleted successfully"
+    );
+
+    shopify.modal.hide(
+      "delete-product-modal"
+    );
+
+    setDeleteProduct(null);
+
+    revalidator.revalidate();
+  } else {
+    shopify.toast.show(
+      "Failed to delete product"
+    );
+  }
+}, [fetcher.data]);
+
   return (
     <>
       <s-box>
@@ -188,6 +299,7 @@ export default function IntentsPages() {
               <s-table-header>Status</s-table-header>
               <s-table-header>Inventory</s-table-header>
               <s-table-header>Vendor</s-table-header>
+              <s-table-header>Action</s-table-header>
             </s-table-header-row>
 
             <s-table-body>
@@ -197,10 +309,10 @@ export default function IntentsPages() {
                 const serialNumber =
                   (currentPage - 1) * pageSize + index + 1;
 
+                  console.log('1111111111111111111' , product);
                 return (
                   <s-table-row key={product.id}>
                     <s-table-cell>{serialNumber}</s-table-cell>
-
                     <s-table-cell>
                       <div
                         style={{
@@ -240,6 +352,21 @@ export default function IntentsPages() {
                     <s-table-cell>{product.status}</s-table-cell>
                     <s-table-cell>{product.totalInventory}</s-table-cell>
                     <s-table-cell>{product.vendor || "-"}</s-table-cell>
+                    <s-table-cell>
+                        <s-button
+                            icon="menu-horizontal"
+                            variant="tertiary"
+                            accessibilityLabel="More actions"
+                            commandFor={`row-actions-${product.id}`}
+                        ></s-button>
+
+                        <s-menu id={`row-actions-${product.id}`} accessibilityLabel="More actions">
+                            <s-button icon="edit" onClick={() => handleEditProduct(product.id)}>Edit product</s-button>
+                            <s-button icon="duplicate">Duplicate product</s-button>
+                            <s-button icon="archive">Archive product</s-button>
+                            <s-button icon="delete" tone="critical" onClick={() => handleDeleteProduct(product)}>Delete product</s-button>
+                        </s-menu>
+                    </s-table-cell>
                   </s-table-row>
                 );
               })}
@@ -301,6 +428,63 @@ export default function IntentsPages() {
               Next
             </button>
           </div>
+
+          
+          <s-modal
+            id="delete-product-modal"
+            heading="Delete product?"
+          >
+            <s-stack gap="base">
+              <s-text>
+                Are you sure you want to delete 
+                "{deleteProduct?.title || "this product"}"?
+              </s-text>
+
+              <s-text tone="caution">
+                This action cannot be undone.
+              </s-text>
+            </s-stack>
+
+            <s-button
+              slot="secondary-actions"
+              variant="secondary"
+              onClick={() => {
+                setDeleteProduct(null);
+
+                shopify.modal.hide(
+                  "delete-product-modal"
+                );
+              }}
+            >
+              Cancel
+            </s-button>
+
+            <s-button
+              slot="primary-action"
+              variant="primary"
+              tone="critical"
+              loading={fetcher.state === "submitting"}
+              disabled={
+                fetcher.state !== "idle" ||
+                !deleteProduct
+              }
+              onClick={() => {
+                if (!deleteProduct) return;
+
+                fetcher.submit(
+                  {
+                    intent: "delete-product",
+                    productId: deleteProduct.id,
+                  },
+                  {
+                    method: "post",
+                  }
+                );
+              }}
+            >
+              Delete product
+            </s-button>
+          </s-modal>
         </s-page>
       </s-box>
     </>
